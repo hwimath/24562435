@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>유리수 순환소수 빈출 (3)</title>
+  <!-- MathJax 로드 -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+  <style>
+    body {
+      background-color: white;
+      color: black;
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      padding: 0;
+    }
+    #gameContainer, #quizArea {
+      margin-top: 10px;
+    }
+    #energyBar {
+      width: 100%;
+      height: 10px;
+      background-color: black;
+      margin-top: 5px;
+      position: relative;
+    }
+    #energyBarInner {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 10px;
+      background-color: white;
+      width: 100%;
+    }
+    .choiceBtn {
+      display: block;
+      margin: 5px 0;
+      background-color: black;
+      color: white;
+      padding: 6px;
+      border: none;
+      cursor: pointer;
+      width: 60%;
+      text-align: left;
+    }
+    .choiceBtn:hover {
+      background-color: #444;
+    }
+    #nextBtn, #submitBtn, #startBtn, #sendScoreBtn {
+      margin-top: 10px;
+      padding: 6px 12px;
+      background-color: black;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #nextBtn:disabled, #submitBtn:disabled {
+      background-color: #888;
+      cursor: not-allowed;
+    }
+    #difficultySelect, #nameInput {
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+    #scoreBoard {
+      margin-top: 10px;
+    }
+    #response {
+      white-space: pre;
+      border: 1px solid black;
+      padding: 5px;
+      margin-top: 5px;
+      width: 90%;
+      height: 100px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+<h1>유리수 순환소수 빈출 (3)</h1>
+
+<div id="initScreen">
+  <div>
+    <label>이름을 입력하세요:</label><br>
+    <input type="text" id="nameInput" placeholder="이름">
+  </div>
+  <div>
+    <label>난이도를 선택하세요:</label><br>
+    <select id="difficultySelect">
+      <option value="top">최상 (시작 20초, 문제당 20점)</option>
+      <option value="high">상 (시작 30초, 문제당 15점)</option>
+      <option value="mid">중 (시작 40초, 문제당 13점)</option>
+      <option value="low">하 (시간제한 없음, 문제당 10점)</option>
+    </select>
+  </div>
+  <button id="startBtn">게임 시작</button>
+</div>
+
+<div id="gameContainer" style="display:none;">
+  <div id="scoreBoard">
+    <div>난이도: <span id="displayDifficulty"></span></div>
+    <div>점수: <span id="score">0</span></div>
+    <div>남은 기회: <span id="lives">3</span></div>
+    <div>전체 게임 시간: <span id="elapsedTime">0</span>초</div>
+  </div>
+  <div id="energyBar">
+    <div id="energyBarInner"></div>
+  </div>
+
+  <div id="quizArea">
+    <div id="questionText"></div>
+    <div id="choices"></div>
+    <button id="submitBtn">제출</button>
+    <button id="nextBtn" disabled>다음 문제</button>
+    <div id="feedback" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<button id="sendScoreBtn" style="display:none;">점수 전송</button>
+<div id="response"></div>
+
+<script>
+// ------------------ 데이터 전송 함수 ------------------
+function saveData(game, name, score, elapsedTime) {
+    const FUNCTION_URL = "https://us-central1-record-f420d.cloudfunctions.net/report";
+
+    const requestData = {
+        game,
+        name,
+        score: parseInt(score, 10),
+        elapsedTime: parseInt(elapsedTime, 10)
+    };
+
+    // fetch를 사용할 때는 비동기로 처리해야 하므로,
+    // 여기서는 단순히 시연용으로만 작성(실제로는 async/await 또는 then() 사용 권장).
+    try {
+        const responsePromise = fetch(FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        responsePromise.then(async (response) => {
+            const responseData = await response.json();
+            if (response.ok) {
+                document.getElementById('response').innerText =
+                    "성공: " + JSON.stringify(responseData, null, 2);
+            } else {
+                document.getElementById('response').innerText =
+                    "오류: " + JSON.stringify(responseData, null, 2);
+            }
+        }).catch((error) => {
+            console.error('요청 실패:', error);
+            document.getElementById('response').innerText =
+                "네트워크 오류: " + error.message;
+        });
+    } catch (error) {
+        console.error('요청 실패:', error);
+        document.getElementById('response').innerText =
+            "네트워크 오류: " + error.message;
+    }
+}
+
+// ------------------ 문제 데이터 ------------------
+// 유형 1 (분수 (n/d)를 (p / 10^q)로 바꾼 후 p+q의 최소값 찾기) 7문제
+const type1 = [
+  {
+    questionText: "다음 분수 \\(\\dfrac{3}{40}\\)를 \\(\\dfrac{a}{10^b}\\) 형태의 유한소수로 나타낼 때, \\(a + b\\) 중 가장 작은 자연수는?",
+    choices: ["18","25","28","75","78"], // 정답: 78
+    correctIndex: 4
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{7}{80}\\)를 \\(\\dfrac{a}{10^b}\\) 형태의 유한소수로 나타낼 때, \\(a + b\\) 중 가장 작은 자연수는?",
+    choices: ["47","100","401","879","250"], // 정답: 879
+    correctIndex: 3
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{9}{200}\\)를 \\(\\dfrac{a}{10^b}\\) 형태로 바꿀 때, \\(a + b\\)의 최소값은?",
+    choices: ["37","39","45","48","54"], // 정답: 48
+    correctIndex: 3
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{11}{25}\\)를 \\(\\dfrac{a}{10^b}\\) 형태로 바꿀 때, \\(a + b\\)의 최소값은?",
+    choices: ["23","44","46","48","50"], // 정답: 46
+    correctIndex: 2
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{7}{125}\\)를 \\(\\dfrac{a}{10^b}\\) 형태로 바꿀 때, \\(a + b\\)의 최소값은?",
+    choices: ["49","54","56","59","63"], // 정답: 59
+    correctIndex: 3
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{3}{16}\\)을 \\(\\dfrac{a}{10^b}\\) 형태로 바꿀 때, \\(a + b\\)의 최소값은?",
+    choices: ["1024","1875","1879","2000","1884"], // 정답: 1879
+    correctIndex: 2
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{13}{8}\\)을 \\(\\dfrac{a}{10^b}\\) 형태로 바꿀 때, \\(a + b\\)의 최소값은?",
+    choices: ["128","628","1625","1628","1638"], // 정답: 1628
+    correctIndex: 3
+  }
+];
+
+// 유형 2 (주어진 분수 중 유한소수가 되는 것 모두 고르기) 7문제
+// (3)번, (4)번 문제 정답을 수정했음.
+const type2 = [
+  // #1
+  {
+    questionText:
+      "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
+      + "(1) \\(\\dfrac{9}{12}\\), (2) \\(\\dfrac{14}{42}\\), (3) \\(\\dfrac{18}{60}\\), (4) \\(\\dfrac{22}{(2^2\\times 11)}\\), (5) \\(\\dfrac{8}{(2^3\\times 7)}\\)",
+    choices: [
+      "1,3,4",
+      "1,4,5",
+      "2,3,4",
+      "1,2,3",
+      "3,4,5"
+    ],
+    correctIndex: 0 // 1,3,4
+  },
+  // #2
+  {
+    questionText:
+      "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
+      + "(1) \\(\\dfrac{25}{50}\\), (2) \\(\\dfrac{10}{(2\\times 3\\times 5)}\\), (3) \\(\\dfrac{21}{84}\\), (4) \\(\\dfrac{12}{25}\\), (5) \\(\\dfrac{9}{(3^2\\times 5)}\\)",
+    choices: [
+      "1,3,4",
+      "1,3,4,5",
+      "2,4,5",
+      "1,2,3,4",
+      "1,4,5"
+    ],
+    correctIndex: 1 // 1,3,4,5
+  },
+  // #3 (수정)
+  {
+    questionText:
+      "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
+      + "(1) \\(\\dfrac{16}{40}\\), (2) \\(\\dfrac{27}{(2^3\\times 3^2)}\\), (3) \\(\\dfrac{45}{(3^2\\times 5)}\\), (4) \\(\\dfrac{36}{90}\\), (5) \\(\\dfrac{14}{(2\\times 7)}\\)",
+    // 모두 유한소수이므로 정답은 1,2,3,4,5
+    choices: [
+      "1,2,3,4,5",
+      "1,3,4,5",
+      "2,3,4",
+      "1,2,3,5",
+      "1,4,5"
+    ],
+    correctIndex: 0 // "1,2,3,4,5"
+  },
+  // #4 (수정)
+  {
+    questionText:
+      "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
+      + "(1) \\(\\dfrac{8}{20}\\), (2) \\(\\dfrac{30}{(2\\times 3\\times 5)}\\), (3) \\(\\dfrac{49}{98}\\), (4) \\(\\dfrac{81}{(3^4)}\\), (5) \\(\\dfrac{18}{(2\\times 3^2)}\\)",
+    // 모두 유한소수이므로 정답은 1,2,3,4,5
+    choices: [
+      "1,2,3",
+      "1,2,4,5",
+      "1,2,3,4",
+      "2,3,4",
+      "1,2,3,4,5"
+    ],
+    correctIndex: 4 // "1,2,3,4,5"
+  },
+  // #5
+  {
+    questionText:
+      "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
+      + "(1) \\(\\dfrac{10}{25}\\), (2) \\(\\dfrac{12}{(2^2\\times 3)}\\), (3) \\(\\dfrac{15}{(3\\times 5)}\\), (4) \\(\\dfrac{21}{(3^2\\times 7)}\\), (5) \\(\\dfrac{27}{(3^3)}\\)",
+    choices: [
+      "1,2,3",
+      "1,3,4",
+      "1,2,3,5",
+      "2,3,4",
+      "1,4,5"
+    ],
+    correctIndex: 2 // 1,2,3,5
+  },
+  // #6
+  {
+    questionText:
+      "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
+      + "(1) \\(\\dfrac{4}{30}\\), (2) \\(\\dfrac{6}{(2\\times 3)}\\), (3) \\(\\dfrac{25}{(5^2)}\\), (4) \\(\\dfrac{50}{(2\\times 5^2)}\\), (5) \\(\\dfrac{14}{(2\\times 7)}\\)",
+    choices: [
+      "1,2,3",
+      "2,3,4,5",
+      "1,3,4,5",
+      "1,2,4,5",
+      "2,4,5"
+    ],
+    correctIndex: 1 // 2,3,4,5
+  },
+  // #7
+  {
+    questionText:
+      "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
+      + "(1) \\(\\dfrac{36}{(2^2\\times 3^2)}\\), (2) \\(\\dfrac{40}{(2^3\\times 5)}\\), (3) \\(\\dfrac{45}{(3^2\\times 5)}\\), (4) \\(\\dfrac{100}{(2^2\\times 5^2)}\\), (5) \\(\\dfrac{54}{(2\\times 3^2\\times 7)}\\)",
+    choices: [
+      "1,2,3",
+      "1,2,3,4",
+      "2,3,4,5",
+      "1,2,4",
+      "1,2,3,5"
+    ],
+    correctIndex: 1 // 1,2,3,4
+  }
+];
+
+// 유형 3 (\\(\\dfrac{X}{(2^p\\times 3\\times 5)^a}\\)가 유한소수가 되는 a의 개수) 7문제
+const type3 = [
+  {
+    questionText: "다음 분수 \\(\\dfrac{72}{(2^2\\times 3\\times 5)^a}\\)를 유한소수로 나타낼 수 있는 한 자리 자연수 \\(a\\)는 모두 몇 개인가?",
+    choices: ["1개","2개","3개","4개","5개"], // a=1,2 -> 2개
+    correctIndex: 1
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{12}{(2\\times 3\\times 5)^a}\\)를 유한소수로 나타낼 수 있는 한 자리 자연수 \\(a\\)는 모두 몇 개인가?",
+    choices: ["1개","2개","3개","4개","5개"], // a=1 -> 1개
+    correctIndex: 0
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{150}{(2\\times 3\\times 5^2)^a}\\)를 유한소수로 나타낼 수 있는 한 자리 자연수 \\(a\\)는 모두 몇 개인가?",
+    choices: ["1개","2개","3개","4개","5개"], // a=1 -> 1개
+    correctIndex: 0
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{36}{(2^3\\times 3\\times 5)^a}\\)를 유한소수로 나타낼 수 있는 한 자리 자연수 \\(a\\)는 모두 몇 개인가?",
+    choices: ["1개","2개","3개","4개","5개"], // a=1,2 -> 2개
+    correctIndex: 1
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{56}{(2^2\\times 7\\times 5)^a}\\)를 유한소수로 나타낼 수 있는 한 자리 자연수 \\(a\\)는 모두 몇 개인가?",
+    choices: ["1개","2개","3개","4개","5개"], // a=1 -> 1개
+    correctIndex: 0
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{300}{(2^2\\times 3\\times 5)^a}\\)를 유한소수로 나타낼 수 있는 한 자리 자연수 \\(a\\)는 모두 몇 개인가?",
+    choices: ["1개","2개","3개","4개","5개"], // a=1 -> 1개
+    correctIndex: 0
+  },
+  {
+    questionText: "다음 분수 \\(\\dfrac{180}{(2\\times 3\\times 5^2)^a}\\)를 유한소수로 나타낼 수 있는 한 자리 자연수 \\(a\\)는 모두 몇 개인가?",
+    choices: ["1개","2개","3개","4개","5개"], // a=1,2 -> 2개
+    correctIndex: 1
+  }
+];
+
+// 유형 4 (\\(\\dfrac{a}{N}\\)가 유한소수이고 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 됨. a+b 구하기) 7문제
+const type4 = [
+  {
+    questionText: "분수 \\(\\dfrac{a}{450}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
+    choices: ["36","45","50","61","77"], // 정답: 61
+    correctIndex: 3
+  },
+  {
+    questionText: "분수 \\(\\dfrac{a}{900}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
+    choices: ["72","97","144","61","25"], // 정답: 97
+    correctIndex: 1
+  },
+  {
+    questionText: "분수 \\(\\dfrac{a}{1800}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
+    choices: ["100","169","97","61","144"],
+    correctIndex: 1 // 169
+  },
+  {
+    questionText: "분수 \\(\\dfrac{a}{600}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
+    choices: ["48","60","73","100","25"],
+    correctIndex: 2 // 73
+  },
+  {
+    questionText: "분수 \\(\\dfrac{a}{225}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
+    choices: ["36","43","61","50","72"],
+    correctIndex: 1 // 43
+  },
+  {
+    questionText: "분수 \\(\\dfrac{a}{75}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
+    choices: ["31","45","50","61","18"],
+    correctIndex: 0 // 31
+  },
+  {
+    questionText: "분수 \\(\\dfrac{a}{300}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
+    choices: ["24","49","61","72","25"],
+    correctIndex: 1 // 49
+  }
+];
+
+// 모든 문제를 합쳐서 하나의 배열에 담는다 (총 28문제).
+let allQuestions = [...type1, ...type2, ...type3, ...type4];
+
+// 문제 배열 섞기(한 바퀴용)
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const r = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[r]] = [arr[r], arr[i]];
+  }
+}
+
+// 첫 바퀴에 모든 문제를 한 번씩 사용하기 위해 섞는다.
+shuffleArray(allQuestions);
+
+// 이후에는 random 으로 계속 뽑을 수 있도록 관리
+let currentIndex = 0;       // 현재 몇 번째 문제(첫 바퀴)
+let answeredCount = 0;      // 몇 문제를 풀었는지 (첫 바퀴 28문제)
+let score = 0;
+let lives = 3;
+let gameStarted = false;
+let totalElapsedTime = 0;   // 전체 게임 시간(초 단위)
+let questionTime = 0;       // 현재 문제 남은 시간
+let questionTimeLimit = 20; // 난이도에 따라 달라짐
+let difficultyScore = 20;   // 난이도별 점수(기본 최상=20)
+let infiniteTime = false;   // 하(무제한) 모드 여부
+
+let timerInterval = null;
+let totalTimeInterval = null;
+
+const initScreen = document.getElementById("initScreen");
+const gameContainer = document.getElementById("gameContainer");
+const questionText = document.getElementById("questionText");
+const choicesDiv = document.getElementById("choices");
+const submitBtn = document.getElementById("submitBtn");
+const nextBtn = document.getElementById("nextBtn");
+const feedback = document.getElementById("feedback");
+const energyBarInner = document.getElementById("energyBarInner");
+const scoreSpan = document.getElementById("score");
+const livesSpan = document.getElementById("lives");
+const elapsedTimeSpan = document.getElementById("elapsedTime");
+const difficultySelect = document.getElementById("difficultySelect");
+const displayDifficulty = document.getElementById("displayDifficulty");
+const nameInput = document.getElementById("nameInput");
+const startBtn = document.getElementById("startBtn");
+const sendScoreBtn = document.getElementById("sendScoreBtn");
+
+// 난이도에 따른 초기 설정
+function setDifficulty(diff) {
+  if (diff === "top") {
+    questionTimeLimit = 20;
+    difficultyScore = 20;
+    displayDifficulty.textContent = "최상";
+  } else if (diff === "high") {
+    questionTimeLimit = 30;
+    difficultyScore = 15;
+    displayDifficulty.textContent = "상";
+  } else if (diff === "mid") {
+    questionTimeLimit = 40;
+    difficultyScore = 13;
+    displayDifficulty.textContent = "중";
+  } else {
+    infiniteTime = true;
+    questionTimeLimit = 999999; // 사실상 무제한
+    difficultyScore = 10;
+    displayDifficulty.textContent = "하";
+  }
+}
+
+// 전체 게임 시간 표시
+function startTotalTimer() {
+  totalTimeInterval = setInterval(() => {
+    totalElapsedTime++;
+    elapsedTimeSpan.textContent = totalElapsedTime;
+  }, 1000);
+}
+
+// 문제 타이머(에너지바) 갱신
+function startQuestionTimer() {
+  questionTime = questionTimeLimit;
+  updateEnergyBar();
+  if (!infiniteTime) {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      questionTime--;
+      if (questionTime <= 0) {
+        // 시간 초과 -> 오답 처리
+        clearInterval(timerInterval);
+        feedback.textContent = "시간 초과! 오답 처리됩니다.";
+        lives--;
+        updateLives();
+        // 정답 공개
+        showCorrectAnswer();
+        // 다음 문제 버튼 활성화
+        nextBtn.disabled = false;
+      }
+      updateEnergyBar();
+    }, 1000);
+  } else {
+    // 하 모드는 타이머 동작 안 함
+    updateEnergyBar();
+  }
+}
+
+function updateEnergyBar() {
+  // white로 남은 부분을 표현(가득 찼다가 점점 줄어듦)
+  if (infiniteTime) {
+    energyBarInner.style.width = "100%";
+  } else {
+    const ratio = questionTime / questionTimeLimit;
+    energyBarInner.style.width = (ratio * 100) + "%";
+  }
+}
+
+// 현재 문제 보여주기
+function showQuestion() {
+  feedback.textContent = "";
+  nextBtn.disabled = true; // 정답/오답 확인 전에는 '다음 문제' 못 누름
+  submitBtn.disabled = false;
+
+  // 문제 가져오기
+  let q;
+  if (answeredCount < allQuestions.length) {
+    // 첫 바퀴
+    q = allQuestions[answeredCount];
+  } else {
+    // 이후는 랜덤
+    const r = Math.floor(Math.random() * allQuestions.length);
+    q = allQuestions[r];
+  }
+
+  questionText.innerHTML = q.questionText;
+  choicesDiv.innerHTML = "";
+  
+  // 보기 섞기
+  const indices = [0,1,2,3,4];
+  shuffleArray(indices);
+
+  // 섞인 순서대로 버튼 생성
+  let newChoices = [];
+  indices.forEach((idx, i) => {
+    newChoices.push(q.choices[idx]);
+  });
+
+  // correctIndex도 재계산
+  let newCorrectIndex = indices.indexOf(q.correctIndex);
+
+  // 임시로 저장
+  currentQuestion = {
+    question: q.questionText,
+    choices: newChoices,
+    correctIndex: newCorrectIndex
+  };
+
+  // 버튼 생성
+  for (let i=0; i<5; i++) {
+    const btn = document.createElement("button");
+    btn.className = "choiceBtn";
+    btn.textContent = (i+1)+") "+ newChoices[i];
+    btn.onclick = () => {
+      selectAnswer(i);
+    };
+    choicesDiv.appendChild(btn);
+  }
+
+  // MathJax 렌더링
+  MathJax.typeset();
+  // 문제 타이머 시작
+  startQuestionTimer();
+}
+
+// 선택한 답안을 검사
+let selectedAnswerIndex = null;
+let currentQuestion = null;
+
+function selectAnswer(i) {
+  selectedAnswerIndex = i;
+}
+
+// 제출 버튼 클릭
+submitBtn.addEventListener("click", () => {
+  if (selectedAnswerIndex === null) {
+    feedback.textContent = "답안을 선택하세요.";
+    return;
+  }
+  // 제출 -> 정답 확인
+  submitBtn.disabled = true;
+  checkAnswer();
+});
+
+// 정답 확인
+function checkAnswer() {
+  clearInterval(timerInterval); // 문제 타이머 중단
+  const correct = (selectedAnswerIndex === currentQuestion.correctIndex);
+  if (correct) {
+    feedback.textContent = "정답입니다!";
+    score += difficultyScore;
+    scoreSpan.textContent = score;
+  } else {
+    feedback.textContent = "오답입니다. 정답은 [" 
+      + (currentQuestion.correctIndex+1) + ") "
+      + currentQuestion.choices[currentQuestion.correctIndex] + "] 입니다.";
+    lives--;
+    updateLives();
+  }
+  // 다음 문제 버튼 활성화
+  nextBtn.disabled = false;
+}
+
+// 시간 초과나 오답 시 정답 표시
+function showCorrectAnswer() {
+  submitBtn.disabled = true;
+  clearInterval(timerInterval);
+  const idx = currentQuestion.correctIndex;
+  feedback.textContent = "정답은 [" + (idx+1) + ") " 
+    + currentQuestion.choices[idx] + "] 입니다.";
+}
+
+// '다음 문제' 버튼 클릭
+nextBtn.addEventListener("click", () => {
+  // 다음 문제로 이동
+  nextQuestion();
+});
+
+function nextQuestion() {
+  selectedAnswerIndex = null;
+  currentIndex++;
+  answeredCount++;
+
+  if (lives <= 0) {
+    gameOver("기회를 모두 소진하였습니다.");
+    return;
+  }
+
+  showQuestion();
+}
+
+// 라이프 표시
+function updateLives() {
+  livesSpan.textContent = lives;
+  if (lives <= 0) {
+    gameOver("기회를 모두 소진하였습니다.");
+  }
+}
+
+// 게임 오버
+function gameOver(msg) {
+  clearInterval(timerInterval);
+  clearInterval(totalTimeInterval);
+  feedback.textContent = "게임 종료: " + msg;
+  submitBtn.disabled = true;
+  nextBtn.disabled = true;
+  sendScoreBtn.style.display = "inline-block";
+}
+
+// '게임 시작' 버튼
+startBtn.addEventListener("click", () => {
+  const playerName = nameInput.value.trim();
+  if (!playerName) {
+    alert("이름을 입력하세요.");
+    return;
+  }
+  setDifficulty(difficultySelect.value);
+  gameStarted = true;
+  initScreen.style.display = "none";
+  gameContainer.style.display = "block";
+  startTotalTimer();
+  showQuestion();
+});
+
+// 전체 게임 시간 타이머
+function startTotalTimer() {
+  totalTimeInterval = setInterval(() => {
+    totalElapsedTime++;
+    elapsedTimeSpan.textContent = totalElapsedTime;
+  }, 1000);
+}
+
+// '점수 전송' 버튼
+sendScoreBtn.addEventListener("click", () => {
+  const playerName = nameInput.value.trim();
+  saveData("유리수 순환소수 빈출 (3)", playerName, score, totalElapsedTime);
+});
+</script>
+</body>
+</html>
