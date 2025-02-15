@@ -133,8 +133,6 @@ function saveData(game, name, score, elapsedTime) {
         elapsedTime: parseInt(elapsedTime, 10)
     };
 
-    // fetch를 사용할 때는 비동기로 처리해야 하므로,
-    // 여기서는 단순히 시연용으로만 작성(실제로는 async/await 또는 then() 사용 권장).
     try {
         const responsePromise = fetch(FUNCTION_URL, {
             method: 'POST',
@@ -166,7 +164,7 @@ function saveData(game, name, score, elapsedTime) {
 }
 
 // ------------------ 문제 데이터 ------------------
-// 유형 1 (분수 (n/d)를 (p / 10^q)로 바꾼 후 p+q의 최소값 찾기) 7문제
+// 유형 1
 const type1 = [
   {
     questionText: "다음 분수 \\(\\dfrac{3}{40}\\)를 \\(\\dfrac{a}{10^b}\\) 형태의 유한소수로 나타낼 때, \\(a + b\\) 중 가장 작은 자연수는?",
@@ -205,10 +203,8 @@ const type1 = [
   }
 ];
 
-// 유형 2 (주어진 분수 중 유한소수가 되는 것 모두 고르기) 7문제
-// (3)번, (4)번 문제 정답을 수정했음.
+// 유형 2
 const type2 = [
-  // #1
   {
     questionText:
       "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
@@ -220,9 +216,8 @@ const type2 = [
       "1,2,3",
       "3,4,5"
     ],
-    correctIndex: 0 // 1,3,4
+    correctIndex: 0
   },
-  // #2
   {
     questionText:
       "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
@@ -234,14 +229,12 @@ const type2 = [
       "1,2,3,4",
       "1,4,5"
     ],
-    correctIndex: 1 // 1,3,4,5
+    correctIndex: 1
   },
-  // #3 (수정)
   {
     questionText:
       "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
       + "(1) \\(\\dfrac{16}{40}\\), (2) \\(\\dfrac{27}{(2^3\\times 3^2)}\\), (3) \\(\\dfrac{45}{(3^2\\times 5)}\\), (4) \\(\\dfrac{36}{90}\\), (5) \\(\\dfrac{14}{(2\\times 7)}\\)",
-    // 모두 유한소수이므로 정답은 1,2,3,4,5
     choices: [
       "1,2,3,4,5",
       "1,3,4,5",
@@ -249,14 +242,12 @@ const type2 = [
       "1,2,3,5",
       "1,4,5"
     ],
-    correctIndex: 0 // "1,2,3,4,5"
+    correctIndex: 0
   },
-  // #4 (수정)
   {
     questionText:
       "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
       + "(1) \\(\\dfrac{8}{20}\\), (2) \\(\\dfrac{30}{(2\\times 3\\times 5)}\\), (3) \\(\\dfrac{49}{98}\\), (4) \\(\\dfrac{81}{(3^4)}\\), (5) \\(\\dfrac{18}{(2\\times 3^2)}\\)",
-    // 모두 유한소수이므로 정답은 1,2,3,4,5
     choices: [
       "1,2,3",
       "1,2,4,5",
@@ -264,9 +255,8 @@ const type2 = [
       "2,3,4",
       "1,2,3,4,5"
     ],
-    correctIndex: 4 // "1,2,3,4,5"
+    correctIndex: 4
   },
-  // #5
   {
     questionText:
       "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
@@ -278,9 +268,8 @@ const type2 = [
       "2,3,4",
       "1,4,5"
     ],
-    correctIndex: 2 // 1,2,3,5
+    correctIndex: 2
   },
-  // #6
   {
     questionText:
       "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
@@ -292,9 +281,8 @@ const type2 = [
       "1,2,4,5",
       "2,4,5"
     ],
-    correctIndex: 1 // 2,3,4,5
+    correctIndex: 1
   },
-  // #7
   {
     questionText:
       "다음 분수 중 유한소수로 나타낼 수 있는 것을 모두 고르면?<br>"
@@ -306,11 +294,11 @@ const type2 = [
       "1,2,4",
       "1,2,3,5"
     ],
-    correctIndex: 1 // 1,2,3,4
+    correctIndex: 1
   }
 ];
 
-// 유형 3 (\\(\\dfrac{X}{(2^p\\times 3\\times 5)^a}\\)가 유한소수가 되는 a의 개수) 7문제
+// 유형 3
 const type3 = [
   {
     questionText: "다음 분수 \\(\\dfrac{72}{(2^2\\times 3\\times 5)^a}\\)를 유한소수로 나타낼 수 있는 한 자리 자연수 \\(a\\)는 모두 몇 개인가?",
@@ -349,7 +337,7 @@ const type3 = [
   }
 ];
 
-// 유형 4 (\\(\\dfrac{a}{N}\\)가 유한소수이고 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 됨. a+b 구하기) 7문제
+// 유형 4
 const type4 = [
   {
     questionText: "분수 \\(\\dfrac{a}{450}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
@@ -364,34 +352,34 @@ const type4 = [
   {
     questionText: "분수 \\(\\dfrac{a}{1800}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
     choices: ["100","169","97","61","144"],
-    correctIndex: 1 // 169
+    correctIndex: 1
   },
   {
     questionText: "분수 \\(\\dfrac{a}{600}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
     choices: ["48","60","73","100","25"],
-    correctIndex: 2 // 73
+    correctIndex: 2
   },
   {
     questionText: "분수 \\(\\dfrac{a}{225}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
     choices: ["36","43","61","50","72"],
-    correctIndex: 1 // 43
+    correctIndex: 1
   },
   {
     questionText: "분수 \\(\\dfrac{a}{75}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
     choices: ["31","45","50","61","18"],
-    correctIndex: 0 // 31
+    correctIndex: 0
   },
   {
     questionText: "분수 \\(\\dfrac{a}{300}\\)를 소수로 나타내면 유한소수이고, 기약분수로 만들면 \\(\\dfrac{2}{b}\\)가 된다. 이 때, \\(a+b\\)는?",
     choices: ["24","49","61","72","25"],
-    correctIndex: 1 // 49
+    correctIndex: 1
   }
 ];
 
 // 모든 문제를 합쳐서 하나의 배열에 담는다 (총 28문제).
 let allQuestions = [...type1, ...type2, ...type3, ...type4];
 
-// 문제 배열 섞기(한 바퀴용)
+// 문제 배열 섞기 (첫 바퀴용)
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const r = Math.floor(Math.random() * (i + 1));
@@ -399,19 +387,17 @@ function shuffleArray(arr) {
   }
 }
 
-// 첫 바퀴에 모든 문제를 한 번씩 사용하기 위해 섞는다.
 shuffleArray(allQuestions);
 
-// 이후에는 random 으로 계속 뽑을 수 있도록 관리
-let currentIndex = 0;       // 현재 몇 번째 문제(첫 바퀴)
-let answeredCount = 0;      // 몇 문제를 풀었는지 (첫 바퀴 28문제)
+let currentIndex = 0;       // 현재 문제 번호 (첫 바퀴)
+let answeredCount = 0;      // 푼 문제 수 (첫 바퀴 28문제)
 let score = 0;
 let lives = 3;
 let gameStarted = false;
-let totalElapsedTime = 0;   // 전체 게임 시간(초 단위)
+let totalElapsedTime = 0;   // 전체 게임 시간 (초)
 let questionTime = 0;       // 현재 문제 남은 시간
 let questionTimeLimit = 20; // 난이도에 따라 달라짐
-let difficultyScore = 20;   // 난이도별 점수(기본 최상=20)
+let difficultyScore = 20;   // 난이도별 점수 (기본: 최상=20)
 let infiniteTime = false;   // 하(무제한) 모드 여부
 
 let timerInterval = null;
@@ -434,7 +420,7 @@ const nameInput = document.getElementById("nameInput");
 const startBtn = document.getElementById("startBtn");
 const sendScoreBtn = document.getElementById("sendScoreBtn");
 
-// 난이도에 따른 초기 설정
+// 난이도 설정
 function setDifficulty(diff) {
   if (diff === "top") {
     questionTimeLimit = 20;
@@ -456,7 +442,7 @@ function setDifficulty(diff) {
   }
 }
 
-// 전체 게임 시간 표시
+// 전체 게임 시간 타이머
 function startTotalTimer() {
   totalTimeInterval = setInterval(() => {
     totalElapsedTime++;
@@ -464,7 +450,7 @@ function startTotalTimer() {
   }, 1000);
 }
 
-// 문제 타이머(에너지바) 갱신
+// 문제 타이머 (에너지바)
 function startQuestionTimer() {
   questionTime = questionTimeLimit;
   updateEnergyBar();
@@ -473,26 +459,21 @@ function startQuestionTimer() {
     timerInterval = setInterval(() => {
       questionTime--;
       if (questionTime <= 0) {
-        // 시간 초과 -> 오답 처리
         clearInterval(timerInterval);
         feedback.textContent = "시간 초과! 오답 처리됩니다.";
         lives--;
         updateLives();
-        // 정답 공개
         showCorrectAnswer();
-        // 다음 문제 버튼 활성화
         nextBtn.disabled = false;
       }
       updateEnergyBar();
     }, 1000);
   } else {
-    // 하 모드는 타이머 동작 안 함
     updateEnergyBar();
   }
 }
 
 function updateEnergyBar() {
-  // white로 남은 부분을 표현(가득 찼다가 점점 줄어듦)
   if (infiniteTime) {
     energyBarInner.style.width = "100%";
   } else {
@@ -501,19 +482,16 @@ function updateEnergyBar() {
   }
 }
 
-// 현재 문제 보여주기
+// 현재 문제 표시
 function showQuestion() {
   feedback.textContent = "";
-  nextBtn.disabled = true; // 정답/오답 확인 전에는 '다음 문제' 못 누름
+  nextBtn.disabled = true;
   submitBtn.disabled = false;
 
-  // 문제 가져오기
   let q;
   if (answeredCount < allQuestions.length) {
-    // 첫 바퀴
     q = allQuestions[answeredCount];
   } else {
-    // 이후는 랜덤
     const r = Math.floor(Math.random() * allQuestions.length);
     q = allQuestions[r];
   }
@@ -522,64 +500,59 @@ function showQuestion() {
   choicesDiv.innerHTML = "";
   
   // 보기 섞기
-  const indices = [0,1,2,3,4];
+  const indices = [0, 1, 2, 3, 4];
   shuffleArray(indices);
-
-  // 섞인 순서대로 버튼 생성
   let newChoices = [];
-  indices.forEach((idx, i) => {
+  indices.forEach(idx => {
     newChoices.push(q.choices[idx]);
   });
-
-  // correctIndex도 재계산
-  let newCorrectIndex = indices.indexOf(q.correctIndex);
-
-  // 임시로 저장
+  
+  // 원래 정답의 값(q.choices[q.correctIndex])이 섞인 newChoices에서 몇 번째인지 찾음
+  let newCorrectIndex = newChoices.indexOf(q.choices[q.correctIndex]);
+  
   currentQuestion = {
     question: q.questionText,
     choices: newChoices,
     correctIndex: newCorrectIndex
   };
 
-  // 버튼 생성
-  for (let i=0; i<5; i++) {
+  // 보기 버튼 생성 (data-index 사용)
+  for (let i = 0; i < 5; i++) {
     const btn = document.createElement("button");
     btn.className = "choiceBtn";
-    btn.textContent = (i+1)+") "+ newChoices[i];
-    btn.onclick = () => {
-      selectAnswer(i);
-    };
+    btn.textContent = (i + 1) + ") " + newChoices[i];
+    btn.setAttribute("data-index", i);
+    btn.addEventListener("click", function() {
+      // 모든 버튼 배경 초기화
+      document.querySelectorAll(".choiceBtn").forEach(b => {
+        b.style.backgroundColor = "black";
+      });
+      this.style.backgroundColor = "#444";
+      selectedAnswerIndex = parseInt(this.getAttribute("data-index"));
+    });
     choicesDiv.appendChild(btn);
   }
 
-  // MathJax 렌더링
   MathJax.typeset();
-  // 문제 타이머 시작
   startQuestionTimer();
 }
 
-// 선택한 답안을 검사
 let selectedAnswerIndex = null;
 let currentQuestion = null;
 
-function selectAnswer(i) {
-  selectedAnswerIndex = i;
-}
-
-// 제출 버튼 클릭
+// 제출 버튼 이벤트
 submitBtn.addEventListener("click", () => {
   if (selectedAnswerIndex === null) {
     feedback.textContent = "답안을 선택하세요.";
     return;
   }
-  // 제출 -> 정답 확인
   submitBtn.disabled = true;
   checkAnswer();
 });
 
 // 정답 확인
 function checkAnswer() {
-  clearInterval(timerInterval); // 문제 타이머 중단
+  clearInterval(timerInterval);
   const correct = (selectedAnswerIndex === currentQuestion.correctIndex);
   if (correct) {
     feedback.textContent = "정답입니다!";
@@ -587,27 +560,25 @@ function checkAnswer() {
     scoreSpan.textContent = score;
   } else {
     feedback.textContent = "오답입니다. 정답은 [" 
-      + (currentQuestion.correctIndex+1) + ") "
+      + (currentQuestion.correctIndex + 1) + ") " 
       + currentQuestion.choices[currentQuestion.correctIndex] + "] 입니다.";
     lives--;
     updateLives();
   }
-  // 다음 문제 버튼 활성화
   nextBtn.disabled = false;
 }
 
-// 시간 초과나 오답 시 정답 표시
+// 시간초과 또는 오답 시 정답 표시
 function showCorrectAnswer() {
   submitBtn.disabled = true;
   clearInterval(timerInterval);
   const idx = currentQuestion.correctIndex;
-  feedback.textContent = "정답은 [" + (idx+1) + ") " 
+  feedback.textContent = "정답은 [" + (idx + 1) + ") " 
     + currentQuestion.choices[idx] + "] 입니다.";
 }
 
-// '다음 문제' 버튼 클릭
+// '다음 문제' 버튼 이벤트
 nextBtn.addEventListener("click", () => {
-  // 다음 문제로 이동
   nextQuestion();
 });
 
@@ -624,7 +595,6 @@ function nextQuestion() {
   showQuestion();
 }
 
-// 라이프 표시
 function updateLives() {
   livesSpan.textContent = lives;
   if (lives <= 0) {
@@ -632,7 +602,6 @@ function updateLives() {
   }
 }
 
-// 게임 오버
 function gameOver(msg) {
   clearInterval(timerInterval);
   clearInterval(totalTimeInterval);
@@ -642,7 +611,7 @@ function gameOver(msg) {
   sendScoreBtn.style.display = "inline-block";
 }
 
-// '게임 시작' 버튼
+// '게임 시작' 버튼 이벤트
 startBtn.addEventListener("click", () => {
   const playerName = nameInput.value.trim();
   if (!playerName) {
@@ -657,15 +626,7 @@ startBtn.addEventListener("click", () => {
   showQuestion();
 });
 
-// 전체 게임 시간 타이머
-function startTotalTimer() {
-  totalTimeInterval = setInterval(() => {
-    totalElapsedTime++;
-    elapsedTimeSpan.textContent = totalElapsedTime;
-  }, 1000);
-}
-
-// '점수 전송' 버튼
+// '점수 전송' 버튼 이벤트
 sendScoreBtn.addEventListener("click", () => {
   const playerName = nameInput.value.trim();
   saveData("유리수 순환소수 빈출 (3)", playerName, score, totalElapsedTime);
